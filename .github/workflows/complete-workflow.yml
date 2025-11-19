@@ -17,7 +17,7 @@ jobs:
           cache: maven
 
       - name: Run SonarCloud Analysis
-        run: mvn clean verify sonar:sonar -Dsonar.branch.name=master -Dsonar.projectKey=klndly -Dsonar.organization=klndly -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${SONAR_TOKEN}
+        run: mvn clean verify sonar:sonar -Dsonar.branch.name=master -Dsonar.projectKey=klndly_devsecops-github-actions-all -Dsonar.organization=klndly -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${SONAR_TOKEN}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
