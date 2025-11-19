@@ -14,7 +14,7 @@ jobs:
         distribution: 'zulu'
         cache: maven
     - name: Run Sonar Analysis with cloud
-      run: mvn -B verify sonar:sonar -Dsonar.projectKey=klndly -Dsonar.organization=klndly -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+      run: mvn -B verify sonar:sonar -Dsonar.branch.name=master -Dsonar.projectKey=klndly -Dsonar.organization=klndly -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=${{ secrets.SONAR_TOKEN }}
       continue-on-error: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
