@@ -1,4 +1,4 @@
-name: Build code, run unit test, run SAST
+name: Build code, run unit test, run SAST and SCA
 on: push
 
 jobs:
