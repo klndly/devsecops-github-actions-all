@@ -1,14 +1,30 @@
-name: Build code, run unit test, run SAST and SCA scan
+name: Build, Test, SonarCloud & Snyk Scan
 
 on:
   push:
+    branches:
+      - master
+      - main
+  pull_request:
+  workflow_dispatch: # Allows manual trigger
 
 jobs:
-  build:
+  build-and-analyze:
     runs-on: ubuntu-latest
     steps:
+      # Checkout source code
       - uses: actions/checkout@v4
 
+      # Cache Maven dependencies for faster builds
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      # Set up JDK 21
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -16,21 +32,32 @@ jobs:
           distribution: 'zulu'
           cache: maven
 
-      - name: Run SonarCloud Analysis
-        run: mvn clean verify sonar:sonar -Dsonar.branch.name=master -Dsonar.projectKey=klndly_devsecops-github-actions-all -Dsonar.organization=klndly -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${SONAR_TOKEN}
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
+      # Build and run tests
+      - name: Build and Test
+        run: mvn clean verify
 
-  security:
+      # SonarCloud Analysis
+      - name: SonarCloud Analysis
+        run: |
+          mvn sonar:sonar \
+            -Dsonar.projectKey=klndly_devsecops-github-actions-all \
+            -Dsonar.organization=klndly \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
+            -Dsonar.branch.name=${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Required for PR decoration
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        continue-on-error: false # Fail if Sonar analysis fails
+
+  security-scan:
     runs-on: ubuntu-latest
-    needs: build
+    needs: build-and-analyze
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run Snyk to check for vulnerabilities
+      # Run Snyk for SCA
+      - name: Snyk Scan for Vulnerabilities
         uses: snyk/actions/maven@master
-        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
